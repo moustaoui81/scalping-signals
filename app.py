@@ -1,8 +1,5 @@
-# file: scalping_signals_app.py
-
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import streamlit as st
 import time
 
@@ -17,7 +14,7 @@ def fetch_data(symbol, period='5d', interval='5m'):
     ticker = yf.Ticker(symbol)
     df = ticker.history(period=period, interval=interval)
     if df.empty:
-        raise ValueError(f"لا توجد بيانات للرمز: {symbol}")
+        raise ValueError(f"No data for symbol {symbol}")
     return df
 
 def sma(data, window):
@@ -56,10 +53,9 @@ def analyze_price_action(df):
 
     return signal, round(tp,5) if tp else None, round(sl,5) if sl else None
 
-# واجهة Streamlit
-st.set_page_config(page_title="تقرير إشارات السكالبينج", layout="wide")
-st.title("📈 تقرير إشارات السكالبينج")
-st.markdown("### يتم التحديث كل 10 ثواني تلقائيًا")
+st.set_page_config(page_title="Scalping Signals", layout="wide")
+
+st.title("🔍 إشارات السكالبينج")
 
 placeholder = st.empty()
 
@@ -88,15 +84,25 @@ def render_table():
             })
 
     df_result = pd.DataFrame(data)
-    df_result['الإشارة'] = df_result['الإشارة'].apply(lambda x: 
-        f"🟢 شراء" if x == "شراء" else
-        f"🔴 بيع" if x == "بيع" else
-        f"⚪ {x}"
-    )
-    placeholder.table(df_result)
 
-# التحديث كل 10 ثواني
-refresh_interval = 10
+    # تحسين عرض الإشارة مع رموز ملونة داخل النص (لا يدعم Streamlit html في DataFrame لكن هذا أقرب)
+    def format_signal(x):
+        if x == "شراء":
+            return "🟢 شراء"
+        elif x == "بيع":
+            return "🔴 بيع"
+        else:
+            return "⚪ لا توجد إشارة"
+
+    df_result['الإشارة'] = df_result['الإشارة'].apply(format_signal)
+
+    placeholder.dataframe(df_result, use_container_width=True)
+
+# التحديث التلقائي كل 10 ثواني مع زر توقف وبدء التحديث
+auto_refresh = st.checkbox("تحديث تلقائي كل 10 ثواني", value=True)
+
 while True:
     render_table()
-    time.sleep(refresh_interval)
+    if not auto_refresh:
+        break
+    time.sleep(10)
