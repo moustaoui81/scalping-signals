@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import time
+from streamlit_autorefresh import st_autorefresh
 
 # دالة لتلوين خلايا "الإشارة"
 def style_signals(val):
@@ -15,7 +15,9 @@ def style_signals(val):
         weight = 'normal'
     return f'color: {color}; font-weight: {weight}'
 
-# بيانات الإشارات
+# هنا يتم تحديث الصفحة تلقائياً كل 10 ثواني
+count = st_autorefresh(interval=10 * 1000, limit=None, key="auto_refresh")
+
 data = {
     "الرمز": ["EUR/USD", "XAU/USD", "BTC/USD", "NAS100"],
     "السعر الحالي": [1.11669, 3205.30005, 103035.125, 21428.79102],
@@ -26,8 +28,8 @@ data = {
 
 df = pd.DataFrame(data)
 
-# إعداد ستريمليت
 st.set_page_config(page_title="تقرير إشارات السكالبينج", layout="wide")
+
 st.markdown("""
 <style>
 body {
@@ -72,11 +74,6 @@ h1, h2 {
 
 st.title("تقرير إشارات السكالبينج")
 
-# عرض الجدول مع تلوين الإشارات
 st.dataframe(df.style.applymap(style_signals, subset=["الإشارة"]))
 
 st.markdown('<div class="footer">التحديث التلقائي كل 10 ثواني</div>', unsafe_allow_html=True)
-
-# تحديث تلقائي للصفحة كل 10 ثواني
-time.sleep(10)
-st.experimental_rerun()
