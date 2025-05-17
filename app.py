@@ -2,7 +2,7 @@ import yfinance as yf
 import streamlit as st
 import pandas as pd
 import numpy as np
-import time
+from streamlit_autorefresh import st_autorefresh
 
 # رموز العملات والأدوات المالية
 symbols = {
@@ -38,6 +38,7 @@ def analyze_price_action(df):
     signal = "لا توجد إشارة"
     tp = None
     sl = None
+    explanation = ""
     
     last_close = df['Close'].iloc[-1]
     sma_10 = df['SMA_10'].iloc[-1]
@@ -48,85 +49,149 @@ def analyze_price_action(df):
         signal = "شراء"
         tp = last_close * 1.002
         sl = last_close * 0.998
+        explanation = (
+            f"المتوسط المتحرك السريع (10) أعلى من المتوسط البطيء (30)، "
+            f"وRSI أقل من 70، مما يدل على قوة في الاتجاه الصاعد وفرصة شراء جيدة."
+        )
     elif sma_10 < sma_30 and rsi_val > 30:
         signal = "بيع"
         tp = last_close * 0.998
         sl = last_close * 1.002
+        explanation = (
+            f"المتوسط المتحرك السريع (10) أقل من المتوسط البطيء (30)، "
+            f"وRSI أعلى من 30، مما يشير إلى ضعف في السعر وفرصة بيع."
+        )
+    else:
+        explanation = (
+            "لا توجد إشارة واضحة حالياً بناءً على المتوسطات المتحركة وRSI."
+        )
 
-    return signal, round(tp,5) if tp else None, round(sl,5) if sl else None
+    return signal, round(tp, 5) if tp else "-", round(sl, 5) if sl else "-", explanation
 
-# تصميم الصفحة
-st.set_page_config(page_title="إشارات السكالبينج الحيّة", layout="centered")
+# تحديث الصفحة كل 10 ثواني تلقائيًا
+st_autorefresh(interval=10*1000, limit=None, key="datarefresh")
 
+st.set_page_config(page_title="تحليل إشارات السكالبينج", layout="centered")
+
+# تصميم CSS للصفحة
 st.markdown("""
-    <style>
-    .main {
-        background-color: #f0f2f6;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    .signal-box {
-        background: white;
-        padding: 15px 25px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
-    }
-    .signal-title {
-        color: #195782;
-        font-size: 22px;
-        font-weight: bold;
-        margin-bottom: 8px;
-    }
-    .signal-text {
-        font-size: 18px;
-        margin-bottom: 6px;
-    }
-    .signal-buy {
-        color: green;
-        font-weight: 700;
-    }
-    .signal-sell {
-        color: red;
-        font-weight: 700;
-    }
-    </style>
+<style>
+body {
+    background-color: #f9fafb;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+}
+h1 {
+    color: #195782;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.table-container {
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    background-color: #195782;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    text-align: center;
+    border-radius: 8px 8px 0 0;
+}
+td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-size: 15px;
+}
+tr:hover {
+    background-color: #f1f7ff;
+}
+.signal-buy {
+    color: #008000;
+    font-weight: bold;
+}
+.signal-sell {
+    color: #d32f2f;
+    font-weight: bold;
+}
+.signal-none {
+    color: #666666;
+}
+.description {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #333333;
+    background-color: #eef5fc;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: inset 0 0 5px #c4d7f7;
+}
+footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 13px;
+    color: #999;
+}
+</style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='main'>", unsafe_allow_html=True)
+st.title("تحليل إشارات السكالبينج الحيّة")
 
-st.title("تقرير إشارات السكالبينج الحيّة")
-
-# زر تحديث يدوي
-if st.button("تحديث البيانات الآن 🔄"):
-    st.experimental_rerun()
-
-# تشغيل تحديث تلقائي كل 10 ثواني
-# باستخدام streamlit_autorefresh
-from streamlit_autorefresh import st_autorefresh
-count = st_autorefresh(interval=10*1000, limit=None, key="refresh")
-
+# بناء بيانات الجدول
+data_rows = []
 for name, symbol in symbols.items():
     try:
         df = fetch_data(symbol)
         current_price = round(df['Close'].iloc[-1], 5)
-        signal, tp, sl = analyze_price_action(df)
-
-        st.markdown(f"""
-        <div class='signal-box'>
-            <div class='signal-title'>{name}</div>
-            <div class='signal-text'><b>السعر الحالي:</b> {current_price}</div>
-            <div class='signal-text'><b>الإشارة:</b> 
-                <span class='{"signal-buy" if signal=="شراء" else "signal-sell" if signal=="بيع" else ""}'>{signal}</span>
-            </div>
-            <div class='signal-text'><b>هدف الربح (TP):</b> {tp if tp else "-"}</div>
-            <div class='signal-text'><b>وقف الخسارة (SL):</b> {sl if sl else "-"}</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        signal, tp, sl, explanation = analyze_price_action(df)
+        data_rows.append({
+            "الأداة": name,
+            "السعر الحالي": current_price,
+            "الإشارة": signal,
+            "هدف الربح (TP)": tp,
+            "وقف الخسارة (SL)": sl,
+            "شرح الإشارة": explanation
+        })
     except Exception as e:
-        st.error(f"حدث خطأ في جلب البيانات لـ {name}: {e}")
+        data_rows.append({
+            "الأداة": name,
+            "السعر الحالي": "-",
+            "الإشارة": "خطأ",
+            "هدف الربح (TP)": "-",
+            "وقف الخسارة (SL)": "-",
+            "شرح الإشارة": f"حدث خطأ: {e}"
+        })
 
-st.markdown("</div>", unsafe_allow_html=True)
+df_display = pd.DataFrame(data_rows)
+
+# تغيير لون نص الإشارة حسب نوعها
+def color_signal(val):
+    if val == "شراء":
+        return 'color: green; font-weight: bold;'
+    elif val == "بيع":
+        return 'color: red; font-weight: bold;'
+    elif val == "خطأ":
+        return 'color: orange; font-weight: bold;'
+    else:
+        return 'color: gray;'
+
+styled_df = df_display.style.applymap(color_signal, subset=["الإشارة"])
+
+st.markdown('<div class="table-container">', unsafe_allow_html=True)
+st.write(styled_df.to_html(escape=False), unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<footer> 
+تم تحديث البيانات تلقائيًا كل 10 ثواني | خدمة إشارات السكالبينج الحيّة
+</footer>
+""", unsafe_allow_html=True)
