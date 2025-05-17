@@ -28,7 +28,7 @@ data = {
 
 df = pd.DataFrame(data)
 
-st.set_page_config(page_title="تقرير إشارات السكالبينج", layout="wide")
+st.set_page_config(page_title="2تقرير إشارات السكالبينج", layout="wide")
 
 st.markdown("""
 <style>
