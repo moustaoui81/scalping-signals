@@ -54,7 +54,6 @@ def analyze_price_action(df):
     return signal, round(tp,5) if tp else None, round(sl,5) if sl else None
 
 st.set_page_config(page_title="Scalping Signals", layout="wide")
-
 st.title("🔍 إشارات السكالبينج")
 
 placeholder = st.empty()
@@ -85,7 +84,7 @@ def render_table():
 
     df_result = pd.DataFrame(data)
 
-    # تحسين عرض الإشارة مع رموز ملونة داخل النص (لا يدعم Streamlit html في DataFrame لكن هذا أقرب)
+    # تنسيق بسيط للإشارة مع رموز ملونة بالنص فقط
     def format_signal(x):
         if x == "شراء":
             return "🟢 شراء"
@@ -96,9 +95,8 @@ def render_table():
 
     df_result['الإشارة'] = df_result['الإشارة'].apply(format_signal)
 
-    placeholder.dataframe(df_result, use_container_width=True)
+    placeholder.table(df_result)
 
-# التحديث التلقائي كل 10 ثواني مع زر توقف وبدء التحديث
 auto_refresh = st.checkbox("تحديث تلقائي كل 10 ثواني", value=True)
 
 while True:
