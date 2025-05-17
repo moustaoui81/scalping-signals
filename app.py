@@ -2,13 +2,12 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import yfinance as yf
 import pandas as pd
-import time
+
+# ✅ Must be FIRST command
+st.set_page_config(page_title="Scalping Signals", layout="wide")
 
 # Auto-refresh every 10 seconds
 st_autorefresh(interval=10 * 1000, key="datarefresh")
-
-# --- Page configuration ---
-st.set_page_config(page_title="Scalping Signals", layout="wide")
 
 # --- Custom CSS styling ---
 st.markdown("""
