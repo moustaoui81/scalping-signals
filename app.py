@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import streamlit as st
-import time
+from streamlit_autorefresh import st_autorefresh
 
 symbols = {
     'EUR/USD': 'EURUSD=X',
@@ -114,63 +114,63 @@ def main():
 
     st.markdown('<div class="big-font">تقرير إشارات السكالبينج</div>', unsafe_allow_html=True)
 
-    while True:
-        rows = []
-        for name, symbol in symbols.items():
-            try:
-                df = fetch_data(symbol)
-                current_price = round(df['Close'].iloc[-1], 5)
-                signal, tp, sl = analyze_price_action(df)
-                rows.append((name, current_price, signal, tp, sl))
-            except Exception as e:
-                rows.append((name, "خطأ", f"حدث خطأ: {str(e)}", "-", "-"))
+    # تحديث تلقائي كل 10 ثواني
+    count = st_autorefresh(interval=10_000, limit=None, key="refresh")
 
-        # بناء جدول HTML
-        table_html = """
-        <table>
-          <thead>
-            <tr>
-              <th>الرمز</th>
-              <th>السعر الحالي</th>
-              <th>الإشارة</th>
-              <th>هدف الربح (TP)</th>
-              <th>وقف الخسارة (SL)</th>
-            </tr>
-          </thead>
-          <tbody>
+    rows = []
+    for name, symbol in symbols.items():
+        try:
+            df = fetch_data(symbol)
+            current_price = round(df['Close'].iloc[-1], 5)
+            signal, tp, sl = analyze_price_action(df)
+            rows.append((name, current_price, signal, tp, sl))
+        except Exception as e:
+            rows.append((name, "خطأ", f"حدث خطأ: {str(e)}", "-", "-"))
+
+    # بناء جدول HTML
+    table_html = """
+    <table>
+      <thead>
+        <tr>
+          <th>الرمز</th>
+          <th>السعر الحالي</th>
+          <th>الإشارة</th>
+          <th>هدف الربح (TP)</th>
+          <th>وقف الخسارة (SL)</th>
+        </tr>
+      </thead>
+      <tbody>
+    """
+
+    for r in rows:
+        name, price, signal, tp, sl = r
+        if signal == "شراء":
+            signal_html = f'<span class="signal-buy">{signal}</span>'
+        elif signal == "بيع":
+            signal_html = f'<span class="signal-sell">{signal}</span>'
+        elif "حدث خطأ" in str(signal):
+            signal_html = f'<span style="color:#f44336;">{signal}</span>'
+        else:
+            signal_html = f'<span class="signal-none">{signal}</span>'
+
+        tp_text = f"{tp}" if tp else "-"
+        sl_text = f"{sl}" if sl else "-"
+        table_html += f"""
+        <tr>
+            <td>{name}</td>
+            <td>{price}</td>
+            <td>{signal_html}</td>
+            <td class="tp-sl">{tp_text}</td>
+            <td class="tp-sl">{sl_text}</td>
+        </tr>
         """
+    table_html += """
+      </tbody>
+    </table>
+    <div class="footer">التحديث التلقائي كل 10 ثواني</div>
+    """
 
-        for r in rows:
-            name, price, signal, tp, sl = r
-            if signal == "شراء":
-                signal_html = f'<span class="signal-buy">{signal}</span>'
-            elif signal == "بيع":
-                signal_html = f'<span class="signal-sell">{signal}</span>'
-            elif "حدث خطأ" in str(signal):
-                signal_html = f'<span style="color:#f44336;">{signal}</span>'
-            else:
-                signal_html = f'<span class="signal-none">{signal}</span>'
-
-            tp_text = f"{tp}" if tp else "-"
-            sl_text = f"{sl}" if sl else "-"
-            table_html += f"""
-            <tr>
-                <td>{name}</td>
-                <td>{price}</td>
-                <td>{signal_html}</td>
-                <td class="tp-sl">{tp_text}</td>
-                <td class="tp-sl">{sl_text}</td>
-            </tr>
-            """
-        table_html += """
-          </tbody>
-        </table>
-        <div class="footer">التحديث التلقائي كل 10 ثواني</div>
-        """
-
-        st.markdown(table_html, unsafe_allow_html=True)
-        time.sleep(10)
-        st.experimental_rerun()
+    st.markdown(table_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
