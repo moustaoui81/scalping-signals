@@ -1,34 +1,40 @@
 import streamlit as st
 import pandas as pd
-from streamlit_autorefresh import st_autorefresh
+import time
 
-# دالة لتلوين خلايا "الإشارة"
 def style_signals(val):
     if val == "شراء":
-        color = '#4CAF50'  # أخضر
+        color = '#4CAF50'
         weight = 'bold'
     elif val == "بيع":
-        color = '#f44336'  # أحمر
+        color = '#f44336'
         weight = 'bold'
     else:
-        color = '#aaa'     # رمادي
+        color = '#aaa'
         weight = 'normal'
     return f'color: {color}; font-weight: {weight}'
 
-# هنا يتم تحديث الصفحة تلقائياً كل 10 ثواني
-count = st_autorefresh(interval=10 * 1000, limit=None, key="auto_refresh")
-
-data = {
-    "الرمز": ["EUR/USD", "XAU/USD", "BTC/USD", "NAS100"],
-    "السعر الحالي": [1.11669, 3205.30005, 103035.125, 21428.79102],
-    "الإشارة": ["لا توجد إشارة", "لا توجد إشارة", "بيع", "شراء"],
-    "هدف الربح (TP)": ["-", "-", 102829.05475, 21471.6486],
-    "وقف الخسارة (SL)": ["-", "-", 103241.19525, 21385.93343]
-}
-
-df = pd.DataFrame(data)
-
 st.set_page_config(page_title="تقرير إشارات السكالبينج", layout="wide")
+
+# دالة لجلب البيانات (هنا بيانات ثابتة)
+def get_data():
+    return {
+        "الرمز": ["EUR/USD", "XAU/USD", "BTC/USD", "NAS100"],
+        "السعر الحالي": [1.11669, 3205.30005, 103035.125, 21428.79102],
+        "الإشارة": ["لا توجد إشارة", "لا توجد إشارة", "بيع", "شراء"],
+        "هدف الربح (TP)": ["-", "-", 102829.05475, 21471.6486],
+        "وقف الخسارة (SL)": ["-", "-", 103241.19525, 21385.93343]
+    }
+
+if "refresh_time" not in st.session_state:
+    st.session_state.refresh_time = time.time()
+
+# التحقق من مرور 10 ثواني لتحديث البيانات
+if time.time() - st.session_state.refresh_time > 10:
+    st.session_state.refresh_time = time.time()
+    st.experimental_rerun()
+
+df = pd.DataFrame(get_data())
 
 st.markdown("""
 <style>
