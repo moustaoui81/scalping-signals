@@ -1,7 +1,6 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
-# بيانات الإشارات (يمكنك تعديلها أو جلبها من API)
 signals = [
     {"symbol": "EUR/USD", "price": "1.11669", "signal": "لا توجد إشارة", "tp": "-", "sl": "-"},
     {"symbol": "XAU/USD", "price": "3205.30005", "signal": "لا توجد إشارة", "tp": "-", "sl": "-"},
@@ -9,49 +8,62 @@ signals = [
     {"symbol": "NAS100", "price": "21428.79102", "signal": "شراء", "tp": "21471.6486", "sl": "21385.93343"},
 ]
 
-# CSS التصميم
 css_style = """
 <style>
-body {
-    background-color: #f0f4f8;
+/* ضبط خلفية الصفحة والخط */
+body, .main {
+    background-color: #f9fbfc;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     direction: rtl;
     text-align: center;
-    padding: 20px;
 }
+
+/* عنوان */
 h1 {
     color: #195782;
     margin-bottom: 5px;
 }
 h4 {
     color: #333;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
+
+/* تصميم الجدول */
 table {
-    margin: 0 auto;
     border-collapse: collapse;
-    width: 90%;
+    width: 100%;
     max-width: 900px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    background: white;
-    border-radius: 8px;
-    overflow: hidden;
+    margin: 0 auto 40px auto;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #ffffff;
 }
+
 th, td {
-    padding: 15px 12px;
+    padding: 12px 10px;
     border-bottom: 1px solid #ddd;
     font-size: 16px;
+    color: #333;
 }
+
 th {
     background-color: #195782;
     color: white;
-    font-weight: bold;
+    font-weight: 600;
+    text-align: center;
 }
+
+td {
+    text-align: center;
+}
+
+/* تأثير صفوف الجدول */
 tr:hover {
     background-color: #f1f9ff;
 }
+
+/* ألوان الإشارات */
 .signal-none {
-    color: #666666;
+    color: #7a7a7a;
     font-weight: 600;
 }
 .signal-buy {
@@ -72,15 +84,15 @@ tr:hover {
     0%, 100% {opacity: 1;}
     50% {opacity: 0.4;}
 }
+
+/* المعلومات أسفل الصفحة */
 .footer {
-    margin-top: 50px;
+    max-width: 900px;
+    margin: 0 auto 30px auto;
     font-size: 14px;
     color: #555;
     border-top: 1px solid #ccc;
     padding-top: 15px;
-    max-width: 900px;
-    margin-left: auto;
-    margin-right: auto;
     display: flex;
     justify-content: center;
     gap: 20px;
@@ -94,6 +106,8 @@ tr:hover {
 .footer a:hover {
     text-decoration: underline;
 }
+
+/* للأجهزة الصغيرة */
 @media (max-width: 600px) {
     table, th, td {
         font-size: 14px;
@@ -107,7 +121,6 @@ tr:hover {
 """
 
 def main():
-    # تحديث تلقائي كل 10 ثواني
     st_autorefresh(interval=10 * 1000, key="datarefresh")
 
     st.markdown(css_style, unsafe_allow_html=True)
@@ -115,7 +128,7 @@ def main():
     st.title("تقرير إشارات السكالبينج")
     st.markdown("<h4>التحديث التلقائي كل 10 ثواني</h4>", unsafe_allow_html=True)
 
-    # إنشاء جدول الإشارات
+    # بناء جدول الإشارات
     table_html = """
     <table>
         <thead>
@@ -129,8 +142,6 @@ def main():
         </thead>
         <tbody>
     """
-
-    # تعبئة الجدول
     for item in signals:
         signal_class = "signal-none"
         if item["signal"] == "شراء":
@@ -147,7 +158,6 @@ def main():
                 <td>{item['sl']}</td>
             </tr>
         """
-
     table_html += """
         </tbody>
     </table>
@@ -155,7 +165,7 @@ def main():
 
     st.markdown(table_html, unsafe_allow_html=True)
 
-    # معلومات الاتصال بالصفحة بشكل صغير واحترافي
+    # معلومات الاتصال
     st.markdown(
         """
         <div class="footer">
@@ -163,9 +173,10 @@ def main():
             <span>الهاتف / واتساب: <a href="tel:0664959709">0664959709</a></span>
             <span>البريد: <a href="mailto:abdelhak122@gmail.com">abdelhak122@gmail.com</a></span>
         </div>
-        """, 
+        """,
         unsafe_allow_html=True
     )
+
 
 if __name__ == "__main__":
     main()
