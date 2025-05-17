@@ -1,85 +1,91 @@
 import streamlit as st
+import yfinance as yf
 import pandas as pd
 import time
+from streamlit_autorefresh import st_autorefresh
 
-def style_signals(val):
-    if val == "شراء":
-        color = '#4CAF50'
-        weight = 'bold'
-    elif val == "بيع":
-        color = '#f44336'
-        weight = 'bold'
-    else:
-        color = '#aaa'
-        weight = 'normal'
-    return f'color: {color}; font-weight: {weight}'
+# تحديث تلقائي كل 10 ثواني
+st_autorefresh(interval=10 * 1000, key="refresh")
 
-st.set_page_config(page_title="تقرير إشارات السكالبينج", layout="wide")
-
-# دالة لجلب البيانات (هنا بيانات ثابتة)
-def get_data():
-    return {
-        "الرمز": ["EUR/USD", "XAU/USD", "BTC/USD", "NAS100"],
-        "السعر الحالي": [1.11669, 3205.30005, 103035.125, 21428.79102],
-        "الإشارة": ["لا توجد إشارة", "لا توجد إشارة", "بيع", "شراء"],
-        "هدف الربح (TP)": ["-", "-", 102829.05475, 21471.6486],
-        "وقف الخسارة (SL)": ["-", "-", 103241.19525, 21385.93343]
-    }
-
-if "refresh_time" not in st.session_state:
-    st.session_state.refresh_time = time.time()
-
-# التحقق من مرور 10 ثواني لتحديث البيانات
-if time.time() - st.session_state.refresh_time > 10:
-    st.session_state.refresh_time = time.time()
-    st.experimental_rerun()
-
-df = pd.DataFrame(get_data())
-
+# إضافة CSS مخصص للصفحة والجدول
 st.markdown("""
 <style>
-body {
-    direction: rtl;
+body, .css-18e3th9 {
+    background-color: #1e1e2f;
+    color: white;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #1e1e2f;
-    color: #fff;
-    padding: 10px;
+    direction: rtl;
 }
-h1, h2 {
+h2 {
     color: #4a4a6a;
     text-align: center;
     margin-bottom: 15px;
 }
-.stDataFrame table {
-    background-color: #2a2a45 !important;
-    border-collapse: collapse !important;
-    width: 100% !important;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
     box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    background-color: #2a2a45;
+    color: white;
 }
-.stDataFrame th, .stDataFrame td {
-    padding: 12px !important;
-    text-align: center !important;
-    border-bottom: 1px solid #444 !important;
-    font-size: 1rem !important;
+th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid #444;
+    font-size: 1rem;
 }
-.stDataFrame th {
-    background-color: #4a4a6a !important;
-    color: white !important;
+th {
+    background-color: #4a4a6a;
+    color: white;
 }
-.stDataFrame tr:hover {
-    background-color: #3a3a5a !important;
+tr:hover {
+    background-color: #3a3a5a;
+}
+.signal-buy {
+    color: #4CAF50;
+    font-weight: bold;
+}
+.signal-sell {
+    color: #f44336;
+    font-weight: bold;
+}
+.signal-none {
+    color: #aaa;
 }
 .footer {
     text-align: center;
     font-size: 0.9em;
     color: #999;
-    margin-top: 15px;
+    margin-top: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("تقرير إشارات السكالبينج")
+def style_signals(val):
+    if val == "شراء":
+        return 'color: #4CAF50; font-weight: bold; background-color: #d0f0c0'
+    elif val == "بيع":
+        return 'color: #f44336; font-weight: bold; background-color: #f9c0c0'
+    else:
+        return 'color: #aaa; background-color: #f0f0f0'
 
-st.dataframe(df.style.applymap(style_signals, subset=["الإشارة"]))
+# بيانات تجريبية
+data = {
+    "الرمز": ["EUR/USD", "XAU/USD", "BTC/USD", "NAS100"],
+    "السعر الحالي": [1.11669, 3205.30005, 103035.125, 21428.79102],
+    "الإشارة": ["لا توجد إشارة", "لا توجد إشارة", "بيع", "شراء"],
+    "هدف الربح (TP)": ["-", "-", 102829.05475, 21471.6486],
+    "وقف الخسارة (SL)": ["-", "-", 103241.19525, 21385.93343]
+}
+
+df = pd.DataFrame(data)
+
+# تطبيق تلوين الإشارات
+styled_df = df.style.applymap(style_signals, subset=["الإشارة"])
+
+st.markdown("## تقرير إشارات السكالبينج")
+
+st.dataframe(styled_df, use_container_width=True)
 
 st.markdown('<div class="footer">التحديث التلقائي كل 10 ثواني</div>', unsafe_allow_html=True)
